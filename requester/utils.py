@@ -1,4 +1,6 @@
 from typing import NamedTuple
+import logging
+from logging import Logger
 
 from random import choice
   
@@ -22,3 +24,10 @@ class Response(NamedTuple):
     cookies: dict
     status_code: int
     content: bytes | dict | None = None
+    
+def info(message: str) -> Logger:
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)s: %(message)s "
+    )
+    logger = logging.getLogger()
+    return logger.info(message)

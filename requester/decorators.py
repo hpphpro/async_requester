@@ -1,6 +1,8 @@
 import asyncio
 import sys
 
+from requester.utils import info
+
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
@@ -16,7 +18,7 @@ def connection_retry(func):
             try:
                 result = await func(*args, **kwargs)
             except Exception as ex:
-                print(f'Got unexpected error {ex}'
+                info(f'Got unexpected error {ex}'
                       f'Retrying to connect...{retries}')
                 retries += 1
                 await asyncio.sleep(2)
