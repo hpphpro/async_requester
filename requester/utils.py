@@ -20,4 +20,5 @@ class Response(NamedTuple):
     response_url: str 
     headers: dict 
     cookies: dict
+    status_code: int
     content: bytes | dict | None = None

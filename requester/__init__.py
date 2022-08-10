@@ -3,9 +3,9 @@ from aiohttp import ClientSession
 import asyncio
 from typing import AsyncGenerator, Any
 
-from decorators import connection_retry
-from metaclasses import Singleton
-from utils import Response, get_useragent
+from requester.decorators import connection_retry
+from requester.metaclasses import Singleton
+from requester.utils import Response, get_useragent
 
 
 
@@ -39,7 +39,7 @@ class Request(metaclass=Singleton):
         self.options: dict = options
         
     async def create_session(self) -> ClientSession:
-        'Making session'
+        '''Making session'''
         async with ClientSession(headers=self.headers) as session:
             while True:
                 yield session
@@ -78,12 +78,14 @@ class Request(metaclass=Singleton):
                     response_url=response.url,
                     headers=response.headers,
                     cookies=response.cookies,
+                    status_code=response.status
                 )
             return Response(
                     request_url=url,
                     response_url=response.url,
                     headers=response.headers,
                     cookies=response.cookies,
+                    status_code=response.status
                 )
     
     async def _collect_tasks(self, urls: list | tuple, method: str = 'get', json_data: bool = False) -> AsyncGenerator[list[Response], Any]:
