@@ -4,6 +4,8 @@ from logging import Logger
 
 from random import choice
   
+  
+  
 def get_useragent() -> str:
     """Getting random useragent at start"""
     user_agents_list = (
@@ -13,6 +15,7 @@ def get_useragent() -> str:
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36',
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.5 Safari/605.1.15',
         'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36',
     )  
     
     return choice(user_agents_list)
@@ -24,6 +27,7 @@ class Response(NamedTuple):
     cookies: dict
     status_code: int
     content: bytes | dict | None = None
+    
     
 def info(message: str) -> Logger:
     logging.basicConfig(

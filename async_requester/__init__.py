@@ -1,16 +1,17 @@
 from aiohttp import ClientSession
 
 import asyncio
-from typing import AsyncGenerator, Any
+from typing import AsyncGenerator, Any, NoReturn
 
-from requester.decorators import connection_retry
-from requester.metaclasses import Singleton
-from requester.utils import Response, get_useragent
-
-
+from .decorators import connection_retry, event_loop
+from .metaclasses import Singleton
+from .utils import Response, get_useragent
 
 
-class Request(metaclass=Singleton):
+
+
+
+class AsyncRequest(metaclass=Singleton):
     """
     A Singleton class that makes async request and getting data from url/urls
     <options> contents simple request options:
@@ -27,8 +28,10 @@ class Request(metaclass=Singleton):
         - Do not try to use 1000/2000/etc step value (but it may work)
         remember, we should be nice to the server
         Usage:
-            Request().fetch('https://google.com') -> to get single site data
-            Request().collect_data(['https://google.com', 'https://youtube.com']) -> to get a list with sites data
+            AsyncRequest().get('https://google.com') -> to get single site data
+            AsyncRequest().post('https://google.com') -> post request
+            ...
+            AsyncRequest().collect_data(['https://google.com', 'https://youtube.com']) -> to get a list with sites data
     """
     def __init__(self, step: int = 10) -> None:
         self.step = step 
@@ -42,9 +45,35 @@ class Request(metaclass=Singleton):
         async with ClientSession(headers=self.headers) as session:
             while True:
                 yield session
-             
+                
+                
+    async def get(self, url: str, json_data: bool = False, **options) -> Response | NoReturn:
+        return await self._fetch(url=url, method='get', json_data=json_data, **options)
+    
+    
+    async def post(self, url: str, json_data: bool = False, **options) -> Response | NoReturn:
+        return await self._fetch(url=url, method='post', json_data=json_data, **options)
+    
+    
+    async def patch(self, url: str, json_data: bool = False, **options) -> Response | NoReturn:
+        return await self._fetch(url=url, method='patch', json_data=json_data, **options)
+    
+    
+    async def options(self, url: str, json_data: bool = False, **options) -> Response | NoReturn:
+        return await self._fetch(url=url, method='options', json_data=json_data, **options)
+    
+    
+    async def put(self, url: str, json_data: bool = False, **options) -> Response | NoReturn:
+        return await self._fetch(url=url, method='put', json_data=json_data, **options)
+    
     @connection_retry
-    async def fetch(self, url: str, method: str = 'get', json_data: bool = False, **options) -> Response:
+    async def _fetch(
+        self, 
+        url: str, 
+        method: str = 'get', 
+        json_data: bool = False, 
+        **options
+        ) -> Response | NoReturn:
         """
         Args:
             url (str): a url that data you want get from
@@ -52,7 +81,7 @@ class Request(metaclass=Singleton):
             json_data (bool, optional): equal to .json() from basic request. Defaults to False.
 
         Raises:
-            AttributeError: Supports only 'get' and 'post' methods
+            AttributeError: Supports only get/post/put/patch/options methods
 
         Returns:
             Response: a data from request
@@ -61,6 +90,9 @@ class Request(metaclass=Singleton):
         request = {
             'post': session.post,
             'get': session.get,
+            'put': session.put,
+            'options': session.options,
+            'patch': session.patch,
         }
         
         if method not in request:
@@ -86,7 +118,13 @@ class Request(metaclass=Singleton):
                     status_code=response.status
                 )
     
-    async def _collect_tasks(self, urls: list | tuple, method: str = 'get', json_data: bool = False, **options) -> AsyncGenerator[list[Response], Any]:
+    async def _collect_tasks(
+        self, 
+        urls: list | tuple, 
+        method: str = 'get', 
+        json_data: bool = False, 
+        **options
+        ) -> AsyncGenerator[list[Response], Any]:
         """
 
         Args:
@@ -103,9 +141,16 @@ class Request(metaclass=Singleton):
         tasks = set()
         for index in range(0, len(urls), step):
             for url in urls[index:index+step]:
-                tasks.add(asyncio.create_task(self.fetch(url, method=method, json_data=json_data, **options)))
+                tasks.add(asyncio.create_task(self._fetch(url, method=method, json_data=json_data, **options)))
             yield await asyncio.gather(*tasks)
             tasks.clear()
             
-    async def collect_data(self, urls: list | tuple, method: str = 'get', json_data: bool = False, **options) -> AsyncGenerator[list[Response], Any]:
+    async def collect_data(
+        self, 
+        urls: list | tuple, 
+        method: str = 'get', 
+        json_data: bool = False, 
+        **options
+        ) -> AsyncGenerator[list[Response], Any]:
         return self._collect_tasks(urls, method=method, json_data=json_data, **options)
+    

@@ -8,3 +8,4 @@ class Singleton(type):
         if not self.__instance:
             self.__instance = super().__call__(*args, **kwargs)
         return self.__instance
+    
