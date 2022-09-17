@@ -3,7 +3,7 @@ from aiohttp import ClientSession
 import asyncio
 from typing import AsyncGenerator, Any, NoReturn
 
-from .decorators import connection_retry, event_loop
+from .decorators import connection_retry
 from .metaclasses import Singleton
 from .utils import Response, get_useragent
 
@@ -99,7 +99,7 @@ class AsyncRequest(metaclass=Singleton):
             raise AttributeError(f'Expected request method, got {method}')
         if not options.get('headers'):
             options['headers'] = self.headers
-            
+    
         async with request[method](url=url, **options) as response:
             if response.status == 200:
                 return Response(
