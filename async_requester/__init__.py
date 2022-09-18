@@ -3,9 +3,9 @@ from aiohttp import ClientSession
 import asyncio
 from typing import AsyncGenerator, Any, NoReturn
 
-from .decorators import connection_retry
-from .metaclasses import Singleton
-from .utils import Response, get_useragent
+from async_requester.decorators import connection_retry
+from async_requester.metaclasses import Singleton
+from async_requester.utils import Response, get_useragent
 
 
 
@@ -70,14 +70,14 @@ class AsyncRequest(metaclass=Singleton):
     async def _fetch(
         self, 
         url: str, 
-        method: str = 'get', 
+        method: str, 
         json_data: bool = False, 
         **options
         ) -> Response | NoReturn:
         """
         Args:
             url (str): a url that data you want get from
-            method (str, optional): request method. Defaults to 'get'.
+            method (str, optional): request method. 
             json_data (bool, optional): equal to .json() from basic request. Defaults to False.
 
         Raises:
@@ -121,7 +121,7 @@ class AsyncRequest(metaclass=Singleton):
     async def _collect_tasks(
         self, 
         urls: list | tuple, 
-        method: str = 'get', 
+        method: str, 
         json_data: bool = False, 
         **options
         ) -> AsyncGenerator[list[Response], Any]:
@@ -129,8 +129,8 @@ class AsyncRequest(metaclass=Singleton):
 
         Args:
             urls (list | tuple): a urls that data you want to get from
-            method (str, optional): same to .fetch() method
-            json_data (bool, optional): same to .fetch() method
+            method (str, optional): same to ._fetch() method
+            json_data (bool, optional): same to ._fetch() method
 
         Yields:
             Iterator[list[Response]]: returns an AsyncGenerator with list of responses inside
