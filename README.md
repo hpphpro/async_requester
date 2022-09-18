@@ -17,11 +17,11 @@ async def get_google_page():
             response_status = page.status_code
             response_headers = page.headers
             ...
-    get_request_response = await arequests.get(url='https://youtube.com')
+    get_request_response = await arequests.get(url='https://google.com')
     page_data = get_request_response.content
     # you can make the same with 'post' or any other request method
-    post_request_response = await arequests.post(url='https://youtube.com', json='myjson')
-    put_request_response = await arequests.put(url='https://youtube.com', data='mydata')
+    post_request_response = await arequests.post(url='https://google.com', json='myjson')
+    put_request_response = await arequests.put(url='https://google.com', data='mydata')
     ...
 asyncio.run(get_google_page())
 ```
