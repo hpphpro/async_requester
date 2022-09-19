@@ -19,10 +19,25 @@ async def get_google_page():
             ...
     get_request_response = await arequests.get(url='https://google.com')
     page_data = get_request_response.content
+    
+    # Also, you can parse page content
+    #sync method
+    data = get_request_response.html.find('div', id='tophf')
+    #or
+    data = get_request_response.html.select_one('div#tophf')
+    
+    # Same with async methods
+    data = await get_request_response.html.afind('div', id='tophf')
+    # or
+    data = await get_request_response.html.aselect_one('div#tophf')
+    ...
+    
+    
     # you can make the same with 'post' or any other request method
     post_request_response = await arequests.post(url='https://google.com', json='myjson')
     put_request_response = await arequests.put(url='https://google.com', data='mydata')
     ...
+
 asyncio.run(get_google_page())
 ```
-`async_requester` was made with aiohttp module
+`async_requester` was made with aiohttp and bs4 modules
