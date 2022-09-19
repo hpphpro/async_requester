@@ -19,22 +19,7 @@ def get_useragent() -> str:
     
     return choice(user_agents_list)
 
-# @dataclass(frozen=True)
-# class Response:
-#     request_url: str 
-#     response_url: str 
-#     headers: dict 
-#     cookies: dict
-#     status_code: int
-#     content: bytes | dict | None = None
-    
-#     @classmethod
-#     @property
-#     def html(cls) -> AsyncBeatifulSoup:
-#         parser = 'lxml'
-#         if isinstance(cls.content, (bytes, str)):
-#             return AsyncBeatifulSoup(markup=cls.content, features=parser)
-#         raise TypeError(f'Expected bytes or string, got {type(cls.content)}')
+
 class Response:
     
     def __init__(
