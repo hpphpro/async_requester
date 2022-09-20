@@ -19,17 +19,12 @@ async def get_google_page():
             ...
     get_request_response = await arequests.get(url='https://google.com')
     page_data = get_request_response.content
+    ...
     
-    # Also, you can parse page content
-    #sync method
-    data = get_request_response.html.find('div', id='tophf')
-    #or
-    data = get_request_response.html.select_one('div#tophf')
-    
-    # Same with async methods
-    data = await get_request_response.html.afind('div', id='tophf')
+    # Also, you can parse page content asynchronously
+    data = await get_request_response.html.find('div', id='tophf')
     # or
-    data = await get_request_response.html.aselect_one('div#tophf')
+    data = await get_request_response.html.select_one('div#tophf')
     ...
     
     
