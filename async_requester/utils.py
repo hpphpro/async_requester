@@ -5,7 +5,7 @@ from random import choice
 from .aiobs4 import AsyncBeatifulSoup
   
   
-def get_useragent() -> str:
+def get_random_useragent() -> str:
     """Getting random useragent at start"""
     user_agents_list = (
         'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.53 Safari/537.36',

@@ -1,14 +1,18 @@
 from aiohttp import ClientSession
 
-import asyncio
+import asyncio, sys
 from typing import AsyncGenerator, Any, NoReturn
 
 from async_requester.decorators import connection_retry
 from async_requester.metaclasses import Singleton
-from async_requester.utils import Response, get_useragent
+from async_requester.utils import Response, get_random_useragent
 
 
-
+__all__ = [
+    'get_random_useragent',
+    'get_latest_useragent',
+    'AsyncRequest'
+]
 
 
 class AsyncRequest(metaclass=Singleton):
@@ -36,7 +40,7 @@ class AsyncRequest(metaclass=Singleton):
     def __init__(self, step: int = 10) -> None:
         self.step = step 
         self.headers: dict = {
-            'user-agent': get_useragent(),
+            'user-agent': get_random_useragent(),
         }
         self.__session: ClientSession = self.create_session()
         
@@ -47,38 +51,38 @@ class AsyncRequest(metaclass=Singleton):
                 yield session
                 
                 
-    async def get(self, url: str, json_data: bool = False, **options) -> Response | NoReturn:
-        return await self._fetch(url=url, method='get', json_data=json_data, **options)
+    async def get(self, url: str, as_json: bool = False, **options) -> Response | NoReturn:
+        return await self._fetch(url=url, method='get', as_json=as_json, **options)
     
     
-    async def post(self, url: str, json_data: bool = False, **options) -> Response | NoReturn:
-        return await self._fetch(url=url, method='post', json_data=json_data, **options)
+    async def post(self, url: str, as_json: bool = False, **options) -> Response | NoReturn:
+        return await self._fetch(url=url, method='post', as_json=as_json, **options)
     
     
-    async def patch(self, url: str, json_data: bool = False, **options) -> Response | NoReturn:
-        return await self._fetch(url=url, method='patch', json_data=json_data, **options)
+    async def patch(self, url: str, as_json: bool = False, **options) -> Response | NoReturn:
+        return await self._fetch(url=url, method='patch', as_json=as_json, **options)
     
     
-    async def options(self, url: str, json_data: bool = False, **options) -> Response | NoReturn:
-        return await self._fetch(url=url, method='options', json_data=json_data, **options)
+    async def options(self, url: str, as_json: bool = False, **options) -> Response | NoReturn:
+        return await self._fetch(url=url, method='options', as_json=as_json, **options)
     
     
-    async def put(self, url: str, json_data: bool = False, **options) -> Response | NoReturn:
-        return await self._fetch(url=url, method='put', json_data=json_data, **options)
+    async def put(self, url: str, as_json: bool = False, **options) -> Response | NoReturn:
+        return await self._fetch(url=url, method='put', as_json=as_json, **options)
     
     @connection_retry
     async def _fetch(
         self, 
         url: str, 
         method: str, 
-        json_data: bool = False, 
+        as_json: bool = False, 
         **options
         ) -> Response | NoReturn:
         """
         Args:
             url (str): a url that data you want get from
             method (str, optional): request method. 
-            json_data (bool, optional): equal to .json() from basic request. Defaults to False.
+            as_json (bool, optional): equal to .json() from basic request. Defaults to False.
 
         Raises:
             AttributeError: Supports only get/post/put/patch/options methods
@@ -103,7 +107,7 @@ class AsyncRequest(metaclass=Singleton):
         async with request[method](url=url, **options) as response:
             if response.status == 200:
                 return Response(
-                    content=await response.read() if not json_data else await response.json(),
+                    content=await response.read() if not as_json else await response.json(),
                     request_url=url,
                     response_url=response.url,
                     headers=response.headers,
@@ -122,7 +126,7 @@ class AsyncRequest(metaclass=Singleton):
         self, 
         urls: list | tuple, 
         method: str, 
-        json_data: bool = False, 
+        as_json: bool = False, 
         **options
         ) -> AsyncGenerator[list[Response], Any]:
         """
@@ -130,7 +134,7 @@ class AsyncRequest(metaclass=Singleton):
         Args:
             urls (list | tuple): a urls that data you want to get from
             method (str, optional): same to ._fetch() method
-            json_data (bool, optional): same to ._fetch() method
+            as_json (bool, optional): same to ._fetch() method
 
         Yields:
             Iterator[list[Response]]: returns an AsyncGenerator with list of responses inside
@@ -141,7 +145,7 @@ class AsyncRequest(metaclass=Singleton):
         tasks = set()
         for index in range(0, len(urls), step):
             for url in urls[index:index+step]:
-                tasks.add(asyncio.create_task(self._fetch(url, method=method, json_data=json_data, **options)))
+                tasks.add(asyncio.create_task(self._fetch(url, method=method, as_json=as_json, **options)))
             yield await asyncio.gather(*tasks)
             tasks.clear()
             
@@ -149,8 +153,44 @@ class AsyncRequest(metaclass=Singleton):
         self, 
         urls: list | tuple, 
         method: str = 'get', 
-        json_data: bool = False, 
+        as_json: bool = False, 
         **options
         ) -> AsyncGenerator[list[Response], Any]:
-        return self._collect_tasks(urls, method=method, json_data=json_data, **options)
+        return self._collect_tasks(urls, method=method, as_json=as_json, **options)
+    
+    
+async def get_latest_useragent() -> str | None:
+    """
+    Returns:
+        str | None: Trying to get the latest useragent for your browser
+        
+    It's can be useful if site has cloudflare and checks your platform with useragent
+    and compare it. But it may be not enough, check on cookies as well.
+    """
+    
+    linux_ua = 'Mozilla/5.0 (X11; Linux x86_64)'
+    windows_ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+    session = AsyncRequest()
+    response = await session.get('https://www.whatismybrowser.com/guides/the-latest-user-agent/windows')
+    data = await response.html.select('table > tbody > tr')
+    new_ua = None
+    for col in data:
+        chrome = col.select_one('td > b')
+        if chrome and chrome.get_text(strip=True).lower() == 'chrome':
+            ua = col.select_one('span.code')
+            if ua:
+                new_ua = ua.get_text(strip=True)
+                break
+    if new_ua:
+        new_data = new_ua.split(')', 1)[-1]
+        
+        match sys.platform:
+            case 'win32':
+                new_ua = f'{windows_ua}{new_data}'
+            case 'linux' | 'linux2':
+                new_ua = f'{linux_ua}{new_data}'
+            case _:
+                raise Exception(f'This function expected Linux or Windows platform, not {sys.platform}')
+        
+    return new_ua
     
