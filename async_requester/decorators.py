@@ -28,16 +28,3 @@ def connection_retry(func):
                 return result
         raise Exception('Maximum connections retries exceeded')
     return wrap
-
-def event_loop(f):
-    '''A decorator that checks on existing event loop and starts it, otherwise doing nothing'''
-    @wraps(f)
-    def decorator(*args, **kwargs):
-        try:
-            asyncio.get_running_loop()
-        except RuntimeError: 
-            return asyncio.run(f(*args, **kwargs))
-        
-        return f(*args, **kwargs)
-    
-    return decorator

@@ -20,7 +20,7 @@ def decohints(decorator: Callable) -> Callable:
 
 
 @decohints
-def sync_to_async(_class: T):
+def sync_to_async(_class: T) -> Callable:
     class Executor:
         __attr = None 
 
