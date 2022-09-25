@@ -35,4 +35,6 @@ async def get_google_page():
 
 asyncio.run(get_google_page())
 ```
+
 `async_requester` was made with aiohttp and bs4 modules
+

@@ -3,9 +3,10 @@ from aiohttp import ClientSession
 import asyncio, sys
 from typing import AsyncGenerator, Any, NoReturn
 
-from async_requester.decorators import connection_retry
+from .utils.decorators import connection_retry
 from async_requester.metaclasses import Singleton
-from async_requester.utils import Response, get_random_useragent
+from .utils import get_random_useragent
+from .utils.data import Response
 
 
 __all__ = [
@@ -28,6 +29,7 @@ class AsyncRequest(metaclass=Singleton):
         headers,
         ...
     step variable indicates how many requests in a row do you want to do.
+    Also you can use it as session or just once. 
     NOTE:
         - Do not try to use 1000/2000/etc step value (but it may work)
         remember, we should be nice to the server
@@ -37,18 +39,28 @@ class AsyncRequest(metaclass=Singleton):
             ...
             AsyncRequest().collect_data(['https://google.com', 'https://youtube.com']) -> to get a list with sites data
     """
-    def __init__(self, step: int = 10) -> None:
+    def __init__(self, step: int = 10, as_session: bool = True) -> None:
         self.step = step 
         self.headers: dict = {
             'user-agent': get_random_useragent(),
         }
-        self.__session: ClientSession = self.create_session()
+        self.__session: ClientSession = self.create_session(session=as_session)
         
-    async def create_session(self) -> ClientSession:
+    async def create_session(self, session: bool) -> ClientSession:
         '''Making session'''
-        async with ClientSession(headers=self.headers) as session:
+        if not session:
             while True:
-                yield session
+                async with ClientSession(headers=self.headers) as session:
+                    yield session
+        else:
+            async with ClientSession(headers=self.headers) as session:
+                while True:
+                    yield session
+                    
+                    
+    async def send_session_close(self) -> None:
+        session = await anext(self.__session)
+        return await session.close()
                 
                 
     async def get(self, url: str, as_json: bool = False, **options) -> Response | NoReturn:
@@ -90,7 +102,14 @@ class AsyncRequest(metaclass=Singleton):
         Returns:
             Response: a data from request
         """
+        if not isinstance(method, str):
+            raise TypeError(f'method should be a str, not {type(method)}')
+        if not isinstance(as_json, bool):
+            raise TypeError(f'Expected True/False, not {type(as_json)}')
+        
         session = await anext(self.__session) # getting current session
+
+        method = method.lower()
         request = {
             'post': session.post,
             'get': session.get,
@@ -166,6 +185,7 @@ async def get_latest_useragent() -> str | None:
         
     It's can be useful if site has cloudflare and checks your platform with useragent
     and compare it. But it may be not enough, check on cookies as well.
+    Also it's just a way to get it faster. Better use selenium/any instead
     """
     
     linux_ua = 'Mozilla/5.0 (X11; Linux x86_64)'
